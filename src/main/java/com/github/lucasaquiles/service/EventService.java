@@ -12,16 +12,16 @@ import java.util.HashMap;
 public class EventService {
 
     private final Logger log = LoggerFactory.getLogger(EventService.class);
-    private final EventProducer analyticsRabbitClient;
+    private final EventProducer eventProducer;
 
     public EventService(EventProducer analyticsRabbitClient) {
-        this.analyticsRabbitClient = analyticsRabbitClient;
+        this.eventProducer = analyticsRabbitClient;
     }
 
     public void send(Event event) {
 
         log.info("M=send, I=sending, event={}", event);
-        analyticsRabbitClient.send(new HashMap<>(), event);
+        eventProducer.send(new HashMap<>(), event);
         log.info("M=send, I=sent, event={}", event);
     }
 }
