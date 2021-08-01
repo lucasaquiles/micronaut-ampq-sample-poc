@@ -14,5 +14,5 @@ public interface EventProducer {
     @Binding("simple-queue")
 //    @RabbitProperty(name = "contentType", value = "application/json")
 //    @RabbitProperty(name = "contentEncoding", value = "UTF-8")
-    Maybe<Void> send(@Header Map<String, Object> headers, Event event);
+    void send(@Header Map<String, Object> headers, Event event);
 }

@@ -6,10 +6,14 @@ import io.micronaut.http.MediaType;
 import io.micronaut.http.annotation.Body;
 import io.micronaut.http.annotation.Controller;
 import io.micronaut.http.annotation.Post;
+import io.reactivex.Flowable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Controller("/event")
 public class EventController {
 
+    private final Logger log = LoggerFactory.getLogger(EventController.class);
     private final EventService eventService;
 
     public EventController(EventService eventService) {
@@ -17,9 +21,11 @@ public class EventController {
     }
 
     @Post(consumes = MediaType.APPLICATION_JSON, produces = MediaType.APPLICATION_JSON)
-    public Event send(@Body Event event) {
+    public Flowable<Event> send(@Body Event event) {
 
-        eventService.send(event);
-        return event;
+        return Flowable.fromCallable(() -> {
+            eventService.send(event);
+            return event;
+        }).doOnNext(ev -> log.info("M=send, I=sending, event={}", ev));
     }
 }
