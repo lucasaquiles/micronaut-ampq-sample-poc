@@ -4,7 +4,6 @@ import com.github.lucasaquiles.domain.Event;
 import io.micronaut.messaging.annotation.Header;
 import io.micronaut.rabbitmq.annotation.Binding;
 import io.micronaut.rabbitmq.annotation.RabbitClient;
-import io.reactivex.Completable;
 import io.reactivex.Maybe;
 
 import java.util.Map;
