@@ -1,0 +1,11 @@
+micronaut:
+  application:
+    name: rabbitmqApp
+rabbitmq:
+  uri: amqp://localhost:5672
+  virtual-host: /
+  username: guest
+  password: guest
+
+
+
