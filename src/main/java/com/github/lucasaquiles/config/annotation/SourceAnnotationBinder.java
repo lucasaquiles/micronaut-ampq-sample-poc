@@ -15,7 +15,6 @@ public class SourceAnnotationBinder implements RabbitAnnotatedArgumentBinder<Sou
 
     @Override
     public BindingResult<Object> bind(ArgumentConversionContext<Object> context, RabbitConsumerState source) {
-        
         return null;
     }
 }

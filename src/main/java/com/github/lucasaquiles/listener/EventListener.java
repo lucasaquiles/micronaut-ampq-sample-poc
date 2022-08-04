@@ -16,7 +16,7 @@ public class EventListener extends RetriableHandler {
 
     private final Logger log = LoggerFactory.getLogger(MessageListener.class);
 
-    @Queue("simple-queue")
+    @Queue("queue-name-a")
     public void read(final Event event) {
         log.info("M=read, I=receiving event. event={}", event);
         throw new RuntimeException("no sense runtime exception!!");

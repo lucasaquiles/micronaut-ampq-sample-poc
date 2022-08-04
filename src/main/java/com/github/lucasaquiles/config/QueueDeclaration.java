@@ -2,7 +2,7 @@ package com.github.lucasaquiles.config;
 
 public enum QueueDeclaration {
 
-    SIMPLE_QUEUE("simple-queue", true,  5, 5);
+    SIMPLE_QUEUE("queue-name-a", true,  5, 5);
 
     private String queueName;
     private boolean withDLQ;
@@ -28,7 +28,7 @@ public enum QueueDeclaration {
         return interval;
     }
 
-    public boolean WithDLQ() {
+    public boolean withDLQ() {
         return withDLQ;
     }
 

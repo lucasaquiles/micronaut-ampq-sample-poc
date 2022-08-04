@@ -1,6 +1,7 @@
 package com.github.lucasaquiles.listener;
 
 import com.github.lucasaquiles.config.QueueDeclaration;
+import com.github.lucasaquiles.config.properties.QueueProperties;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
 import io.micronaut.rabbitmq.bind.RabbitConsumerState;
@@ -9,6 +10,7 @@ import io.micronaut.rabbitmq.exception.RabbitListenerExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Inject;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -22,7 +24,10 @@ public abstract class RetriableHandler implements RabbitListenerExceptionHandler
     private final Logger log = LoggerFactory.getLogger(RetriableHandler.class);
 
     private final String X_DEATH = "x-death";
-    private final String TTL_COUNT = "count";
+    private final String _TTL = "count";
+
+    @Inject
+    private QueueProperties queueProperties;
 
     abstract public QueueDeclaration queue();
 
@@ -105,7 +110,7 @@ public abstract class RetriableHandler implements RabbitListenerExceptionHandler
         if (headers.containsKey(X_DEATH)) {
 
             final List list = (List) Collections.singletonList(headers.get(X_DEATH)).get(0);
-            retryCount = Long.parseLong(((Map) list.get(0)).get(TTL_COUNT).toString());
+            retryCount = Long.parseLong(((Map) list.get(0)).get(_TTL).toString());
         }
 
         log.info("M=getRetryCount, I=get current header count, retryCount={}", retryCount);

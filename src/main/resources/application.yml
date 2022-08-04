@@ -6,6 +6,17 @@ rabbitmq:
   virtual-host: /
   username: guest
   password: guest
+  bindings:
+    queue-name-a:
+      exchange: queue-name-a
+      queue: queue-name-a
+      dlq: false
+      retry: true
+
+
+
+
+
 
 
 

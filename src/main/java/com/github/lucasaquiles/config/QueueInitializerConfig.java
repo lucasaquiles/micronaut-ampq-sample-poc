@@ -1,38 +1,67 @@
 package com.github.lucasaquiles.config;
 
+import com.github.lucasaquiles.config.properties.QueueProperties;
 import com.rabbitmq.client.BuiltinExchangeType;
 import com.rabbitmq.client.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Stream;
+import java.util.function.Function;
 
+@Singleton
 public class QueueInitializerConfig {
 
     private final Logger log = LoggerFactory.getLogger(QueueInitializerConfig.class);
 
-    public void applyQueueConfig(final Channel channel) {
-        Stream.of(QueueDeclaration.values())
-                .forEach(queue -> declareQueueWith(channel, queue));
+    public void applyQueueConfig(final Channel channel, final QueueProperties queueProperties) {
+
+        log.info("configs: "+queueProperties.getBindings());
+
+        queueProperties.getBindings()
+                .stream()
+                .map(parseQueueProperties())
+                .peek(it -> log.info("M=getBindings, I=defining, queue={}", it))
+                .forEach(it -> declareQueueWith(channel, it));
+
+//        Stream.of(QueueDeclaration.values())
+//                .forEach(queue -> declareQueueWith(channel, queue));
     }
 
-    private void declareQueueWith(Channel channel, QueueDeclaration queue) {
-        try{
+    private Function<QueueProperties.Binding, QueueDeclarationData> parseQueueProperties() {
+        return m -> new QueueDeclarationData(m);
+    }
 
-            final String exchangeName = queue.getExchangeName();
+    class QueueDeclarationData {
+        String exchangeName;
+        String queueName;
+        boolean withDQL;
+        boolean withRetry;
+
+        public QueueDeclarationData(QueueProperties.Binding binding) {
+            this.exchangeName = binding.getExchange();
+            this.queueName = binding.getQueue();
+            this.withDQL = binding.getDlq();
+            this.withRetry = binding.getRetry();
+        }
+    }
+
+    private void declareQueueWith(Channel channel, QueueDeclarationData queue) {
+        try{
+            final String exchangeName = queue.queueName+".exchange";
             channel.exchangeDeclare(exchangeName, BuiltinExchangeType.DIRECT, true);
 
-            declareQueue(channel, queue.getQueueName(), exchangeName, queue.getQueueName(), false);
+            declareQueue(channel, queue.queueName, exchangeName, queue.queueName, false);
 
-            if(queue.WithDLQ()) {
-                declareQueue(channel, queue.getDLQName(), exchangeName, queue.getQueueName(), false);
+            if(queue.withDQL) {
+                declareQueue(channel, queue.queueName + ".dlq", exchangeName, queue.queueName, false);
             }
 
-            if(queue.withRetry()) {
-                declareQueue(channel, queue.getRetryName(), exchangeName, queue.getQueueName(), true);
+            if(queue.withRetry) {
+                declareQueue(channel, queue.queueName+".retry", exchangeName, queue.queueName, true);
             }
         }catch(IOException ex) {
             ex.printStackTrace();
