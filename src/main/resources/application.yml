@@ -10,7 +10,7 @@ rabbitmq:
     queue-name-a:
       exchange: queue-name-a
       queue: queue-name-a
-      dlq: false
+      dlq: true
       retry: true
 
 

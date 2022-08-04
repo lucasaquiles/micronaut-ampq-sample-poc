@@ -19,23 +19,18 @@ public class QueueInitializerConfig {
 
     public void applyQueueConfig(final Channel channel, final QueueProperties queueProperties) {
 
-        log.info("configs: "+queueProperties.getBindings());
-
         queueProperties.getBindings()
                 .stream()
                 .map(parseQueueProperties())
                 .peek(it -> log.info("M=getBindings, I=defining, queue={}", it))
                 .forEach(it -> declareQueueWith(channel, it));
-
-//        Stream.of(QueueDeclaration.values())
-//                .forEach(queue -> declareQueueWith(channel, queue));
     }
 
     private Function<QueueProperties.Binding, QueueDeclarationData> parseQueueProperties() {
         return m -> new QueueDeclarationData(m);
     }
 
-    class QueueDeclarationData {
+    protected class QueueDeclarationData {
         String exchangeName;
         String queueName;
         boolean withDQL;

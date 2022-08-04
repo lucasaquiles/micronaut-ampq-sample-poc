@@ -1,16 +1,16 @@
-package com.github.lucasaquiles.listener;
+package com.github.lucasaquiles.config;
 
-import com.github.lucasaquiles.config.QueueDeclaration;
-import com.github.lucasaquiles.config.properties.QueueProperties;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
+import io.micronaut.rabbitmq.annotation.RabbitListener;
+import io.micronaut.rabbitmq.bind.RabbitBinderRegistry;
 import io.micronaut.rabbitmq.bind.RabbitConsumerState;
 import io.micronaut.rabbitmq.exception.RabbitListenerException;
 import io.micronaut.rabbitmq.exception.RabbitListenerExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -19,6 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+@Singleton
 public abstract class RetriableHandler implements RabbitListenerExceptionHandler {
 
     private final Logger log = LoggerFactory.getLogger(RetriableHandler.class);
@@ -26,29 +27,24 @@ public abstract class RetriableHandler implements RabbitListenerExceptionHandler
     private final String X_DEATH = "x-death";
     private final String _TTL = "count";
 
-    @Inject
-    private QueueProperties queueProperties;
-
     abstract public QueueDeclaration queue();
 
     public void sendTo(final Optional<RabbitConsumerState> rabbitConsumerState, String queuename, String exchange, byte[] message, AMQP.BasicProperties properties) {
 
         rabbitConsumerState.ifPresent(state -> {
             try {
-
                 final Channel channel = state.getChannel().getConnection().createChannel();
                 log.info("M=sendTo, I=should move to, queue={}", queuename);
                 channel.basicPublish(exchange, queuename, properties, message);
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
         });
-
     }
 
     @Override
-    public void handle(RabbitListenerException exception) {
+    public void handle(final RabbitListenerException exception) {
+
         log.error("M=handle, E=handling, listener={}, exception={}", exception.getListener(), exception.getMessage());
 
         long count = getRetryCount(exception.getMessageState());
@@ -64,7 +60,7 @@ public abstract class RetriableHandler implements RabbitListenerExceptionHandler
                     updateMessageProperties(exception.getMessageState(), interval)
             );
         } else {
-
+            log.info("M=handle, I=should move to dlq, dlq={}", queue().getDLQName());
             sendToDLQ(exception.getMessageState());
         }
 
