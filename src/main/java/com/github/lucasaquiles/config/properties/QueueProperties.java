@@ -79,7 +79,7 @@ public class QueueProperties {
             return getQueue()+".retry";
         }
 
-        public String getDqlName() {
+        public String getDlqName() {
             return getQueue()+".dql";
         }
 

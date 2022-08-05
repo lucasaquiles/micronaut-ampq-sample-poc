@@ -10,7 +10,6 @@ import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.function.Function;
 
 @Singleton
 public class QueueInitializerConfig {
@@ -36,7 +35,7 @@ public class QueueInitializerConfig {
             declareQueue(channel, queue.getQueue(), exchangeName, queue.getQueue(), false);
 
             if(queue.getDlq()) {
-                declareQueue(channel, queue.getDqlName(), exchangeName, queue.getQueue(), false);
+                declareQueue(channel, queue.getDlqName(), exchangeName, queue.getQueue(), false);
             }
 
             if(queue.getRetry()) {

@@ -11,7 +11,6 @@ import io.micronaut.rabbitmq.exception.RabbitListenerExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.inject.Inject;
 import javax.inject.Singleton;
 import java.io.IOException;
 import java.time.Duration;
@@ -71,7 +70,7 @@ public class RetriableHandler implements RabbitListenerExceptionHandler {
                     updateMessageProperties(exception.getMessageState(), interval)
             );
         } else {
-            log.info("M=handle, I=should move to dlq, dlq={}", getQueuePropertyMap().getBinding().getDqlName());
+            log.info("M=handle, I=should move to dlq, dlq={}", getQueuePropertyMap().getBinding().getDlqName());
             sendToDLQ(exception.getMessageState());
         }
 
@@ -83,7 +82,7 @@ public class RetriableHandler implements RabbitListenerExceptionHandler {
         rabbitConsumerState.getProperties().getHeaders().remove(X_DEATH);
         sendTo(
                 messageState,
-                getQueuePropertyMap().getBinding().getDqlName(),
+                getQueuePropertyMap().getBinding().getDlqName(),
                 getQueuePropertyMap().getBinding().getExchange(),
                 rabbitConsumerState.getBody(),
                 rabbitConsumerState.getProperties()
