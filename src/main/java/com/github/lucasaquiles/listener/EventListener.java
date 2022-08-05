@@ -1,5 +1,6 @@
 package com.github.lucasaquiles.listener;
 
+import com.github.lucasaquiles.config.annotation.RetriableQueue;
 import com.github.lucasaquiles.domain.Event;
 import io.micronaut.context.annotation.Requires;
 import io.micronaut.context.env.Environment;
@@ -14,10 +15,11 @@ public class EventListener{
 
     private final Logger log = LoggerFactory.getLogger(EventListener.class);
 
-    @Queue("queue-name-a")
+    @RetriableQueue(value = "queue-name-a", maxRetry = 3, interval = 1)
+    @Queue(value = "queue-name-a")
     public void read(final Event event) {
         log.info("M=read, I=receiving event. event={}", event);
-        throw new RuntimeException("no sense runtime exception!!");
+       throw new RuntimeException("no sense runtime exception!!");
     }
 //
 //    @Override

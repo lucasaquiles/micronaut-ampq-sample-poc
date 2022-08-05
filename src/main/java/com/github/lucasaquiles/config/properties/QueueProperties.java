@@ -52,7 +52,7 @@ public class QueueProperties {
         }
 
         public String getExchange() {
-            return exchange;
+            return exchange+".exchange";
         }
 
         public void setExchange(String exchange) {
@@ -73,6 +73,14 @@ public class QueueProperties {
 
         public void setName(String name) {
             this.name = name;
+        }
+
+        public String getRetryQueueName() {
+            return getQueue()+".retry";
+        }
+
+        public String getDqlName() {
+            return getQueue()+".dql";
         }
 
         @Override
