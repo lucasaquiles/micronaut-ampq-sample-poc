@@ -1,14 +1,17 @@
-package com.github.lucasaquiles.listener;
+package com.github.lucasaquiles.config;
 
-import com.github.lucasaquiles.config.QueueDeclaration;
+import com.github.lucasaquiles.config.properties.QueuePropertyMap;
 import com.rabbitmq.client.AMQP;
 import com.rabbitmq.client.Channel;
+import io.micronaut.context.annotation.Replaces;
 import io.micronaut.rabbitmq.bind.RabbitConsumerState;
+import io.micronaut.rabbitmq.exception.DefaultRabbitListenerExceptionHandler;
 import io.micronaut.rabbitmq.exception.RabbitListenerException;
 import io.micronaut.rabbitmq.exception.RabbitListenerExceptionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
@@ -17,49 +20,57 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
-public abstract class RetriableHandler implements RabbitListenerExceptionHandler {
+@Replaces(DefaultRabbitListenerExceptionHandler.class)
+@Singleton
+public class RetriableHandler implements RabbitListenerExceptionHandler {
 
     private final Logger log = LoggerFactory.getLogger(RetriableHandler.class);
 
     private final String X_DEATH = "x-death";
-    private final String TTL_COUNT = "count";
+    private final String _TTL = "count";
 
-    abstract public QueueDeclaration queue();
+    private QueuePropertyMap queuePropertyMap;
 
-    public void sendTo(final Optional<RabbitConsumerState> rabbitConsumerState, String queuename, String exchange, byte[] message, AMQP.BasicProperties properties) {
+    public void setQueuePropertyMap(QueuePropertyMap queuePropertyMap) {
+        this.queuePropertyMap = queuePropertyMap;
+    }
+
+    private QueuePropertyMap getQueuePropertyMap() {
+        return this.queuePropertyMap;
+    }
+
+    private void sendTo(final Optional<RabbitConsumerState> rabbitConsumerState, String queuename, String exchange, byte[] message, AMQP.BasicProperties properties) {
 
         rabbitConsumerState.ifPresent(state -> {
             try {
-
                 final Channel channel = state.getChannel().getConnection().createChannel();
                 log.info("M=sendTo, I=should move to, queue={}", queuename);
                 channel.basicPublish(exchange, queuename, properties, message);
-
             } catch (IOException e) {
                 e.printStackTrace();
             }
         });
-
     }
 
     @Override
-    public void handle(RabbitListenerException exception) {
+    public void handle(final RabbitListenerException exception) {
+
         log.error("M=handle, E=handling, listener={}, exception={}", exception.getListener(), exception.getMessage());
 
         long count = getRetryCount(exception.getMessageState());
-        if (count < queue().getMaxRetry()) {
+        if (count < getQueuePropertyMap().getMaxRetry()) {
 
-            long interval = Duration.of(queue().getInterval() * count, ChronoUnit.SECONDS).toMillis();
+            long interval = Duration.of(getQueuePropertyMap().getInterval() * count, ChronoUnit.SECONDS).toMillis();
             log.info("M=handle, I=should retry, ttl={}", interval);
             sendTo(
                     exception.getMessageState(),
-                    queue().getRetryName(),
-                    queue().getExchangeName(),
+                    getQueuePropertyMap().getBinding().getRetryQueueName(),
+                    getQueuePropertyMap().getBinding().getExchange(),
                     exception.getMessageState().get().getBody(),
                     updateMessageProperties(exception.getMessageState(), interval)
             );
         } else {
-
+            log.info("M=handle, I=should move to dlq, dlq={}", getQueuePropertyMap().getBinding().getDlqName());
             sendToDLQ(exception.getMessageState());
         }
 
@@ -71,8 +82,8 @@ public abstract class RetriableHandler implements RabbitListenerExceptionHandler
         rabbitConsumerState.getProperties().getHeaders().remove(X_DEATH);
         sendTo(
                 messageState,
-                queue().getDLQName(),
-                queue().getExchangeName(),
+                getQueuePropertyMap().getBinding().getDlqName(),
+                getQueuePropertyMap().getBinding().getExchange(),
                 rabbitConsumerState.getBody(),
                 rabbitConsumerState.getProperties()
         );
@@ -102,10 +113,11 @@ public abstract class RetriableHandler implements RabbitListenerExceptionHandler
         final RabbitConsumerState rabbitConsumerState = messageState.get();
 
         final Map<String, Object> headers = rabbitConsumerState.getProperties().getHeaders();
+
         if (headers.containsKey(X_DEATH)) {
 
             final List list = (List) Collections.singletonList(headers.get(X_DEATH)).get(0);
-            retryCount = Long.parseLong(((Map) list.get(0)).get(TTL_COUNT).toString());
+            retryCount = Long.parseLong(((Map) list.get(0)).get(_TTL).toString());
         }
 
         log.info("M=getRetryCount, I=get current header count, retryCount={}", retryCount);

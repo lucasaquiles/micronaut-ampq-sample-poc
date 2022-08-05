@@ -11,14 +11,15 @@ import org.slf4j.LoggerFactory;
 
 @Requires(notEnv = Environment.TEST)
 @RabbitListener
-public class EventListener{
+public class RetriableListener {
 
-    private final Logger log = LoggerFactory.getLogger(EventListener.class);
+    private final Logger log = LoggerFactory.getLogger(RetriableListener.class);
 
-    @RetriableQueue(value = "queue-name-a", maxRetry = 3, interval = 10)
-    @Queue(value = "queue-name-a")
+    @RetriableQueue(value = "retriable-queue", maxRetry = 3, interval = 10)
+    @Queue(value = "retriable-queue")
     public void read(final Event event) {
+
         log.info("M=read, I=receiving event. event={}", event);
-       throw new RuntimeException("no sense runtime exception!!");
+        throw new RuntimeException("no sense runtime exception!!");
     }
 }

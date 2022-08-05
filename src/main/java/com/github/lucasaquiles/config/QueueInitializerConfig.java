@@ -1,38 +1,45 @@
 package com.github.lucasaquiles.config;
 
+import com.github.lucasaquiles.config.properties.QueueProperties;
 import com.rabbitmq.client.BuiltinExchangeType;
 import com.rabbitmq.client.Channel;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import javax.inject.Singleton;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Stream;
 
+@Singleton
 public class QueueInitializerConfig {
 
     private final Logger log = LoggerFactory.getLogger(QueueInitializerConfig.class);
 
-    public void applyQueueConfig(final Channel channel) {
-        Stream.of(QueueDeclaration.values())
-                .forEach(queue -> declareQueueWith(channel, queue));
+    public void applyQueueConfig(final Channel channel, final QueueProperties queueProperties) {
+
+        log.info("configs: "+queueProperties.getBindings());
+
+        queueProperties.getBindings()
+                .stream()
+                .peek(p -> log.info("M=getBindings, I=binding, b={}", p))
+                .peek(it -> log.info("M=getBindings, I=defining, queue={}", it))
+                .forEach(it -> declareQueueWith(channel, it));
     }
 
-    private void declareQueueWith(Channel channel, QueueDeclaration queue) {
+    private void declareQueueWith(Channel channel, QueueProperties.Binding queue) {
         try{
-
-            final String exchangeName = queue.getExchangeName();
+            final String exchangeName = queue.getExchange();
             channel.exchangeDeclare(exchangeName, BuiltinExchangeType.DIRECT, true);
 
-            declareQueue(channel, queue.getQueueName(), exchangeName, queue.getQueueName(), false);
+            declareQueue(channel, queue.getQueue(), exchangeName, queue.getQueue(), false);
 
-            if(queue.WithDLQ()) {
-                declareQueue(channel, queue.getDLQName(), exchangeName, queue.getQueueName(), false);
+            if(queue.getDlq()) {
+                declareQueue(channel, queue.getDlqName(), exchangeName, queue.getQueue(), false);
             }
 
-            if(queue.withRetry()) {
-                declareQueue(channel, queue.getRetryName(), exchangeName, queue.getQueueName(), true);
+            if(queue.getRetry()) {
+                declareQueue(channel, queue.getRetryQueueName(), exchangeName, queue.getQueue(), true);
             }
         }catch(IOException ex) {
             ex.printStackTrace();
