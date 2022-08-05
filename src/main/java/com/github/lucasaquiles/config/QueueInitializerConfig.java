@@ -24,27 +24,8 @@ public class QueueInitializerConfig {
         queueProperties.getBindings()
                 .stream()
                 .peek(p -> log.info("M=getBindings, I=binding, b={}", p))
-                //.map(parseQueueProperties())
                 .peek(it -> log.info("M=getBindings, I=defining, queue={}", it))
                 .forEach(it -> declareQueueWith(channel, it));
-    }
-
-    private Function<QueueProperties.Binding, QueueDeclarationData> parseQueueProperties() {
-        return m -> new QueueDeclarationData(m);
-    }
-
-    protected class QueueDeclarationData {
-        String exchangeName;
-        String queueName;
-        boolean withDQL;
-        boolean withRetry;
-
-        public QueueDeclarationData(QueueProperties.Binding binding) {
-            this.exchangeName = binding.getExchange();
-            this.queueName = binding.getQueue();
-            this.withDQL = binding.getDlq();
-            this.withRetry = binding.getRetry();
-        }
     }
 
     private void declareQueueWith(Channel channel, QueueProperties.Binding queue) {
