@@ -36,7 +36,7 @@ public class RabbitListenerMethodInterceptor implements MethodInterceptor<Object
 
     @Override
     public Object intercept(MethodInvocationContext<Object, Object> context) {
-        log.info("M=intercept, I=processando...");
+        log.info("M=intercept, I=intercepting...");
 
         Optional<AnnotationValue<RetriableQueue>> opt = context.findAnnotation(RetriableQueue.class);
 
@@ -52,7 +52,7 @@ public class RabbitListenerMethodInterceptor implements MethodInterceptor<Object
         final QueueProperties.Binding binding = queueProperties.getBindings().stream()
                 .filter(f -> f.getName().equals(queue))
                 .findFirst()
-                .orElseThrow(() -> new RuntimeException("Nao encontrou a binding " + queue));
+                .orElseThrow(() -> new RuntimeException("Binding not found [" + queue+"]"));
 
         final QueuePropertyMap queuePropertyMap = new QueuePropertyMap(binding, maxRetries, interval);
         final RetriableHandler retriableHandler = beanLocator.getBean(RetriableHandler.class);
@@ -65,7 +65,6 @@ public class RabbitListenerMethodInterceptor implements MethodInterceptor<Object
 
     @Override
     public Object intercept(InvocationContext<Object, Object> context) {
-        log.info("M=aqui é antes ou depois");
         return null;
     }
 
