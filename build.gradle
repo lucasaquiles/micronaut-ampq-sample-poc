@@ -29,6 +29,7 @@ dependencies {
     implementation("io.micronaut:micronaut-http-server-netty")
     implementation("io.micronaut:micronaut-http-client")
     implementation("io.micronaut.rabbitmq:micronaut-rabbitmq")
+    implementation 'com.github.javafaker:javafaker:1.0.2'
     developmentOnly("io.micronaut:micronaut-runtime-osx:$micronautVersion")
     runtimeOnly("ch.qos.logback:logback-classic")
     testAnnotationProcessor(platform("io.micronaut:micronaut-bom:$micronautVersion"))

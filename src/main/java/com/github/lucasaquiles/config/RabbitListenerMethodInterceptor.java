@@ -44,8 +44,9 @@ public class RabbitListenerMethodInterceptor implements MethodInterceptor<Object
             return context.proceed();
         }
 
-        AnnotationValue<RetriableQueue> retriableMethod = opt.get();
-        String queue = retriableMethod.getRequiredValue(String.class);
+        final AnnotationValue<RetriableQueue> retriableMethod = opt.get();
+
+        final String queue = retriableMethod.getRequiredValue(String.class);
         int maxRetries = retriableMethod.getRequiredValue("maxRetry", Integer.class);
         int interval = retriableMethod.getRequiredValue("interval", Integer.class);
 
@@ -57,8 +58,6 @@ public class RabbitListenerMethodInterceptor implements MethodInterceptor<Object
         final QueuePropertyMap queuePropertyMap = new QueuePropertyMap(binding, maxRetries, interval);
         final RetriableHandler retriableHandler = beanLocator.getBean(RetriableHandler.class);
         retriableHandler.setQueuePropertyMap(queuePropertyMap);
-
-       // beanContext.registerSingleton(queuePropertyMap);
 
         return context.getExecutableMethod().invoke(queuePropertyMap, context.getParameterValues());
     }

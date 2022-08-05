@@ -114,6 +114,7 @@ public class RetriableHandler implements RabbitListenerExceptionHandler {
         final RabbitConsumerState rabbitConsumerState = messageState.get();
 
         final Map<String, Object> headers = rabbitConsumerState.getProperties().getHeaders();
+
         if (headers.containsKey(X_DEATH)) {
 
             final List list = (List) Collections.singletonList(headers.get(X_DEATH)).get(0);

@@ -19,9 +19,12 @@ public class QueueInitializerConfig {
 
     public void applyQueueConfig(final Channel channel, final QueueProperties queueProperties) {
 
+        log.info("configs: "+queueProperties.getBindings());
+
         queueProperties.getBindings()
                 .stream()
-                .map(parseQueueProperties())
+                .peek(p -> log.info("M=getBindings, I=binding, b={}", p))
+                //.map(parseQueueProperties())
                 .peek(it -> log.info("M=getBindings, I=defining, queue={}", it))
                 .forEach(it -> declareQueueWith(channel, it));
     }
@@ -44,19 +47,19 @@ public class QueueInitializerConfig {
         }
     }
 
-    private void declareQueueWith(Channel channel, QueueDeclarationData queue) {
+    private void declareQueueWith(Channel channel, QueueProperties.Binding queue) {
         try{
-            final String exchangeName = queue.queueName+".exchange";
+            final String exchangeName = queue.getExchange();
             channel.exchangeDeclare(exchangeName, BuiltinExchangeType.DIRECT, true);
 
-            declareQueue(channel, queue.queueName, exchangeName, queue.queueName, false);
+            declareQueue(channel, queue.getQueue(), exchangeName, queue.getQueue(), false);
 
-            if(queue.withDQL) {
-                declareQueue(channel, queue.queueName + ".dlq", exchangeName, queue.queueName, false);
+            if(queue.getDlq()) {
+                declareQueue(channel, queue.getDqlName(), exchangeName, queue.getQueue(), false);
             }
 
-            if(queue.withRetry) {
-                declareQueue(channel, queue.queueName+".retry", exchangeName, queue.queueName, true);
+            if(queue.getRetry()) {
+                declareQueue(channel, queue.getRetryQueueName(), exchangeName, queue.getQueue(), true);
             }
         }catch(IOException ex) {
             ex.printStackTrace();
